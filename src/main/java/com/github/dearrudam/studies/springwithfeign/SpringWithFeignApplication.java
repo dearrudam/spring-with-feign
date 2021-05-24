@@ -1,19 +1,29 @@
 package com.github.dearrudam.studies.springwithfeign;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.validation.Valid;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
+@EnableFeignClients
 public class SpringWithFeignApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpringWithFeignApplication.class, args);
@@ -84,22 +95,42 @@ class UsuarioDTO {
 
 @RestController
 class CarroController {
-
-    @GetMapping(path = "/usuarios/{id}")
-    public List<Carro> listarCarros(
-        @PathVariable Long useId) {
-        // buscar o usuario
-        // retornar o atributo carros
-        return null;
+    final UsuarioRepository usuarioRepository;
+    final CarroRepository carroRepository;
+    public CarroController(
+        final UsuarioRepository usuarioRepository,
+        final CarroRepository carroRepository
+    ) {
+        this.usuarioRepository = usuarioRepository;
+        this.carroRepository = carroRepository;
     }
 
-    @PostMapping(path = "/usuarios/{id}")
-    public Usuario adicionarCarro(
-        @PathVariable Long useId,
-        @RequestBody Carro carro) {
-        // buscar o usuario
-        // retornar o atributo carros
-        return null;
+    @GetMapping(path = "/usuarios/{usuarioId}/carros")
+    ResponseEntity<?> listarCarros(
+        @PathVariable Long usuarioId
+    ) {
+        final var usuarioRef = this.usuarioRepository.findById(usuarioId);
+        if (usuarioRef.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(usuarioRef.get().getCarros());
+    }
+
+    @PostMapping(path = "/usuarios/{usuarioId}/carros")
+    ResponseEntity<?> adicionarCarro(
+        @PathVariable Long usuarioId,
+        @RequestBody @Valid Carro carro
+    ) {
+        final var usuarioRef = this.usuarioRepository.findById(usuarioId);
+        if (usuarioRef.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var usuario = usuarioRef.get();
+        carro.setId(null); // garantir que o carro será novo
+        this.carroRepository.save(carro);
+        usuario.getCarros().add(carro);
+        this.usuarioRepository.save(usuario);
+        return ResponseEntity.ok(usuario.getCarros());
     }
 }
 
@@ -109,46 +140,91 @@ class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotEmpty
+    @Email
+    private String email;
+    @NotEmpty
     private String nome;
     @OneToMany
-    private List<Carro> carros;
+    private Set<Carro> carros;
 }
 
 @Entity
 @Data
+@EqualsAndHashCode(of = { "id" })
 class Carro {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private boolean rodizio;
+    @AttributeOverrides(
+        {
+            @AttributeOverride(
+                name = "codigo",
+                column = @Column(name = "marca_codigo")
+            ),
+            @AttributeOverride(
+                name = "nome",
+                column = @Column(name = "marca_nome")
+            )
+        }
+    )
     private Marca marca;
+    @AttributeOverrides(
+        {
+            @AttributeOverride(
+                name = "codigo",
+                column = @Column(name = "modelo_codigo")
+            ),
+            @AttributeOverride(
+                name = "nome",
+                column = @Column(name = "modelo_nome")
+            )
+        }
+    )
     private Modelo modelo;
+    @AttributeOverrides(
+        {
+            @AttributeOverride(
+                name = "codigo",
+                column = @Column(name = "ano_codigo")
+            ),
+            @AttributeOverride(
+                name = "nome",
+                column = @Column(name = "ano_nome")
+            )
+        }
+    )
     private Ano ano;
 }
 
 @Repository
 interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    @Query("select new UsuarioDTO(u.id,u.nome) from Usuario u")
-    List<UsuarioDTO> listarUsuarios();
+    @Query("select u.id,u.nome from Usuario u")
+    List<Object[]> listarUsuarios();
+}
+
+@Repository
+interface CarroRepository extends JpaRepository<Carro, Long> {
 }
 
 @RestController
 @Slf4j
 class ModelosController {
-    final ParallelumService service;
+    final ParallelumService parallelumService;
 
-    ModelosController(final ParallelumService service) {
-        this.service = service;
+    ModelosController(final ParallelumService parallelumService) {
+        this.parallelumService = parallelumService;
     }
 
     @GetMapping("/marcas")
     List<Marca> getMarcas() {
-        return service.marcas();
+        return parallelumService.marcas();
     }
 
     @GetMapping("/marcas/{id}/modelos")
     ListaModelos getListaDeModelos(@PathVariable String id) {
-        final var modelos = this.service.modelosPorCodigoMarca(id);
+        final var modelos = this.parallelumService.modelosPorCodigoMarca(id);
         return modelos;
     }
 }
@@ -168,6 +244,7 @@ class ListaModelos {
     private List<Ano> anos;
 }
 
+@Embeddable
 @Data
 @ToString
 class Marca {
@@ -175,16 +252,18 @@ class Marca {
     private String nome;
 }
 
+@Embeddable
 @Data
 @ToString
 class Modelo {
     private String nome;
-    private Integer codigo;
+    private String codigo;
 }
 
+@Embeddable
 @Data
 @ToString
 class Ano {
     private String nome;
-    private Integer codigo;
+    private String codigo;
 }
