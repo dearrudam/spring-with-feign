@@ -20,31 +20,12 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+@Data
+@AllArgsConstructor
+class UsuarioDTO {
+    private Long id;
+    private String nome;
 }

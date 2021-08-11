@@ -20,31 +20,27 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import java.util.Set;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import lombok.Data;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+@Entity
+@Data
+class Usuario {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NotEmpty
+    @Email
+    private String email;
+    @NotEmpty
+    private String nome;
+    @OneToMany
+    private Set<Carro> carros;
 }

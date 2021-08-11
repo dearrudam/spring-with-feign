@@ -20,31 +20,13 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import java.util.List;
+import lombok.Data;
+import lombok.ToString;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+@Data
+@ToString
+class ListaModelos {
+    private List<Modelo> modelos;
+    private List<Ano> anos;
 }

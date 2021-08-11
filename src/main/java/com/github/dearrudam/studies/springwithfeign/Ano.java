@@ -20,31 +20,14 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import javax.persistence.Embeddable;
+import lombok.Data;
+import lombok.ToString;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+@Embeddable
+@Data
+@ToString
+class Ano {
+    private String nome;
+    private String codigo;
 }

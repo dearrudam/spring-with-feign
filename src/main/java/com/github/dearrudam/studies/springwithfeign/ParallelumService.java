@@ -20,31 +20,16 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import java.util.List;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
+@FeignClient(name = "ParallelumService", url = "https://parallelum.com.br")
+interface ParallelumService {
+    @GetMapping("/fipe/api/v1/carros/marcas")
+    List<Marca> marcas();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+    @GetMapping("/fipe/api/v1/carros/marcas/{id}/modelos")
+    ListaModelos modelosPorCodigoMarca(@PathVariable("id") String id);
 }

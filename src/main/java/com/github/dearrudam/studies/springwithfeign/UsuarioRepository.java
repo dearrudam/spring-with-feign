@@ -20,31 +20,13 @@ package com.github.dearrudam.studies.springwithfeign;
  * #L%
  */
 
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringWithFeignApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+@Repository
+interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    @Query("select u.id,u.nome from Usuario u")
+    List<Object[]> listarUsuarios();
 }
